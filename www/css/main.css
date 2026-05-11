@@ -29,12 +29,20 @@
   --transition:    200ms ease;
 }
 
+
 /* =====================================================
    RESET & BASE
 ===================================================== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-html, body {
+html,
+body {
   height: 100%;
   font-family: var(--font-body);
   color: var(--gray-900);
@@ -42,15 +50,15 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-a { color: inherit; text-decoration: none; }
+a   { color: inherit; text-decoration: none; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 ul, ol { list-style: none; }
 img { display: block; max-width: 100%; }
 
+
 /* =====================================================
-   SKIP LINK — WCAG 2.1 AA (temporarily disabled)
+   SKIP LINK — WCAG 2.1 AA
 ===================================================== */
-/*
 .skip-link {
   position: absolute;
   top: -100%;
@@ -65,9 +73,13 @@ img { display: block; max-width: 100%; }
   border-radius: 0 0 var(--radius) var(--radius);
   transition: top var(--transition);
 
-  &:focus { top: 0; outline: 3px solid var(--crimson); outline-offset: 2px; }
+  &:focus {
+    top: 0;
+    outline: 3px solid var(--crimson);
+    outline-offset: 2px;
+  }
 }
-*/
+
 
 /* =====================================================
    FOCUS RING — GLOBAL
@@ -77,6 +89,7 @@ img { display: block; max-width: 100%; }
   outline-offset: 3px;
   border-radius: 3px;
 }
+
 
 /* =====================================================
    TOPBAR
@@ -90,7 +103,9 @@ img { display: block; max-width: 100%; }
   padding: 0 1.5rem;
   gap: 1rem;
 
-  @media (max-width: 768px) { padding: 0 1rem; }
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+  }
 }
 
 .topbar__link {
@@ -128,8 +143,8 @@ img { display: block; max-width: 100%; }
   letter-spacing: .06em;
   text-transform: uppercase;
   transition: background var(--transition), color var(--transition);
-
 }
+
 .topbar__btn--donate {
   background: var(--crimson);
   color: #fff;
@@ -142,8 +157,12 @@ img { display: block; max-width: 100%; }
   color: rgba(255,255,255,.9);
   border: 1px solid rgba(255,255,255,.3);
 
-  &:hover { background: rgba(255,255,255,.1); color: #fff; }
+  &:hover {
+    background: rgba(255,255,255,.1);
+    color: #fff;
+  }
 }
+
 
 /* =====================================================
    HEADER
@@ -163,7 +182,9 @@ img { display: block; max-width: 100%; }
   padding: 0 1.5rem;
   gap: 1.5rem;
 
-  @media (max-width: 768px) { padding: 0 1rem; }
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+  }
 }
 
 .site-header__logo {
@@ -237,10 +258,16 @@ img { display: block; max-width: 100%; }
   transition: color var(--transition), background var(--transition);
   white-space: nowrap;
 
-  &:hover { color: var(--teal); background: var(--teal-light); }
+  &:hover {
+    color: var(--teal);
+    background: var(--teal-light);
+  }
 }
-.site-header__nav-link--active { color: var(--teal); background: var(--teal-light); }
 
+.site-header__nav-link--active {
+  color: var(--teal);
+  background: var(--teal-light);
+}
 
 .site-header__hamburger {
   display: none;
@@ -286,6 +313,185 @@ img { display: block; max-width: 100%; }
   height: var(--accent-bar-h);
   background: var(--crimson);
 }
+
+
+/* =====================================================
+   HEADER NAV DROPDOWN — 2-1-1 Kern County
+===================================================== */
+
+/* Wrapper anchors the dropdown position */
+.site-header__nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  /* Keep trigger highlighted while dropdown is open */
+  &:has(> .site-header__dropdown:not([hidden])) {
+
+    & .site-header__dropdown-trigger {
+      color: var(--teal);
+      background: var(--teal-light);
+    }
+
+    & .site-header__dropdown-chevron {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+/*
+  Trigger — visually identical to .site-header__nav-link
+  but is a <button> so aria-expanded and keyboard events work natively.
+*/
+.site-header__dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  font-family: var(--font-head);
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  padding: .375rem .625rem;
+  border-radius: 6px;
+  letter-spacing: .01em;
+  transition: color var(--transition), background var(--transition);
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--teal);
+    background: var(--teal-light);
+  }
+}
+
+.site-header__dropdown-chevron {
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}
+
+/* Dropdown panel */
+.site-header__dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  min-width: 210px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: .35rem 0;
+
+  /* Arrow pointing up toward the trigger */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border-top: 1px solid var(--gray-200);
+    border-left: 1px solid var(--gray-200);
+  }
+
+  &[hidden] {
+    display: none;
+  }
+
+  &:not([hidden]) {
+    animation: dropdown-in var(--transition);
+  }
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Individual dropdown links */
+.site-header__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .55rem 1rem;
+  font-family: var(--font-head);
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  letter-spacing: .01em;
+  white-space: nowrap;
+  transition: color var(--transition), background var(--transition);
+
+  & svg {
+    flex-shrink: 0;
+    color: var(--gray-500);
+    transition: color var(--transition);
+  }
+
+  &:hover {
+    color: var(--teal);
+    background: var(--teal-light);
+
+    & svg { color: var(--teal); }
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--teal);
+    outline-offset: -3px;
+    border-radius: 0;
+  }
+}
+
+/* Thin rule between groups of items */
+.site-header__dropdown-divider {
+  height: 1px;
+  background: var(--gray-200);
+  margin: .3rem 0;
+}
+
+/* =====================================================
+   MOBILE DRAWER — 2-1-1 sub-group
+   Flat list with teal left-border label.
+   No nested dropdown — easier to tap on small screens.
+===================================================== */
+.site-header__nav-drawer-group {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  border-left: 3px solid var(--teal);
+  margin: .2rem 0;
+  padding-left: .5rem;
+}
+
+.site-header__nav-drawer-group-label {
+  font-family: var(--font-head);
+  font-size: .65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--teal);
+  padding: .4rem .625rem .15rem;
+}
+
+.site-header__nav-link--sub {
+  padding-left: .625rem;
+  color: var(--gray-500);
+
+  &:hover {
+    color: var(--teal);
+    background: var(--teal-light);
+  }
+}
+
 
 /* =====================================================
    UTILITY

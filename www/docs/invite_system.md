@@ -8,17 +8,17 @@ The invite system allows a CAPK admin to onboard new agency users without ever c
 
 ## Files Involved
 
-| File | Location | Purpose |
-|---|---|---|
-| `db.php` | `backend/db.php` | PDO database connection used by all backend files |
-| `sanitize.php` | `backend/auth/sanitize.php` | Cleans all user input before it touches the database |
-| `session.php` | `backend/auth/session.php` | Starts sessions, checks roles, provides helper functions |
-| `invite.php` | `backend/auth/invite.php` | Validates invite tokens and marks them as used |
-| `register.php` | `backend/auth/register.php` | Contains the `registerFromInvite()` function that creates accounts |
-| `send_invite.php` | `backend/admin/send_invite.php` | Admin endpoint — generates token, stores it, emails the link |
-| `login.php` | `backend/auth/login.php` | Verifies credentials, sets session, redirects by role |
-| `www/login.php` | `www/login.php` | Public login page (HTML form + POST handler) |
-| `www/register.php` | `www/register.php` | Public registration page the invite link opens |
+| File               | Location                        | Purpose                                                            |
+|--------------------|---------------------------------|--------------------------------------------------------------------|
+| `db.php`           | `backend/db.php`                | PDO database connection used by all backend files                  |
+| `sanitize.php`     | `backend/auth/sanitize.php`     | Cleans all user input before it touches the database               |
+| `session.php`      | `backend/auth/session.php`      | Starts sessions, checks roles, provides helper functions           |
+| `invite.php`       | `backend/auth/invite.php`       | Validates invite tokens and marks them as used                     |
+| `register.php`     | `backend/auth/register.php`     | Contains the `registerFromInvite()` function that creates accounts |
+| `send_invite.php`  | `backend/admin/send_invite.php` | Admin endpoint — generates token, stores it, emails the link       |
+| `login.php`        | `backend/auth/login.php`        | Verifies credentials, sets session, redirects by role              |
+| `www/login.php`    | `www/login.php`                 | Public login page (HTML form + POST handler)                       |
+| `www/register.php` | `www/register.php`              | Public registration page the invite link opens                     |
 
 ---
 
@@ -58,32 +58,32 @@ Token is now dead — clicking the link again shows "Invalid or Expired"
 ### `invitations`
 Stores every invite that has been sent.
 
-| Column | Type | Purpose |
-|---|---|---|
-| `id` | INT | Primary key |
-| `token` | VARCHAR(64) | The secret 64-character link code |
-| `email` | VARCHAR(255) | Who the invite was sent to |
-| `agency_id` | INT | Which agency they will manage |
-| `role` | VARCHAR(20) | Their role — always `agency` for now |
-| `invited_by` | INT | Which admin account sent it |
-| `used_at` | DATETIME | NULL = not used yet. Set when account is created. |
-| `expires_at` | DATETIME | Link dies after 72 hours |
-| `created_at` | DATETIME | When the invite was sent |
+| Column       | Type         | Purpose                                           |
+|--------------|--------------|---------------------------------------------------|
+| `id`         | INT          | Primary key                                       |
+| `token`      | VARCHAR(64)  | The secret 64-character link code                 |
+| `email`      | VARCHAR(255) | Who the invite was sent to                        |
+| `agency_id`  | INT          | Which agency they will manage                     |
+| `role`       | VARCHAR(20)  | Their role — always `agency` for now              |
+| `invited_by` | INT          | Which admin account sent it                       |
+| `used_at`    | DATETIME     | NULL = not used yet. Set when account is created. |
+| `expires_at` | DATETIME     | Link dies after 72 hours                          |
+| `created_at` | DATETIME     | When the invite was sent                          |
 
 ### `accounts`
 Stores all user accounts — both admin and agency.
 
-| Column | Type | Purpose |
-|---|---|---|
-| `aid` | INT | Primary key |
-| `agency_id` | INT | NULL for admins, set to agency for agency users |
-| `email` | VARCHAR(255) | Login email |
-| `password_hash` | VARCHAR(255) | bcrypt hash — plain text never stored |
-| `first_name` | VARCHAR(100) | Set by user during registration |
-| `last_name` | VARCHAR(100) | Set by user during registration |
-| `role` | VARCHAR(20) | `admin` or `agency` |
-| `is_active` | BOOLEAN | Can deactivate without deleting |
-| `last_login_at` | DATETIME | Updated on every successful login |
+| Column          | Type         | Purpose                                         |
+|-----------------|--------------|-------------------------------------------------|
+| `aid`           | INT          | Primary key                                     |
+| `agency_id`     | INT          | NULL for admins, set to agency for agency users |
+| `email`         | VARCHAR(255) | Login email                                     |
+| `password_hash` | VARCHAR(255) | bcrypt hash — plain text never stored           |
+| `first_name`    | VARCHAR(100) | Set by user during registration                 |
+| `last_name`     | VARCHAR(100) | Set by user during registration                 |
+| `role`          | VARCHAR(20)  | `admin` or `agency`                             |
+| `is_active`     | BOOLEAN      | Can deactivate without deleting                 |
+| `last_login_at` | DATETIME     | Updated on every successful login               |
 
 ---
 
@@ -217,17 +217,17 @@ SELECT id, email, used_at FROM invitations;
 
 ## Current Status
 
-| Feature | Status |
-|---|---|
-| Token generation |Working |
-| Token stored in DB |  Working |
-| Invite link validation |  Working |
-| Registration form |  Working |
-| Account creation |  Working |
-| One-time use enforcement |  Working |
-| 72-hour expiry | Working |
-| Session created on register |  Working |
-| Login page |  Working |
-| Email delivery |  Blocked by DigitalOcean SMTP  |
-| Admin dashboard UI |  Not built yet |
-| Agency dashboard UI |  Not built yet |
+| Feature                     | Status                       |
+|-----------------------------|------------------------------|
+| Token generation            | Working                      |
+| Token stored in DB          | Working                      |
+| Invite link validation      | Working                      |
+| Registration form           | Working                      |
+| Account creation            | Working                      |
+| One-time use enforcement    | Working                      |
+| 72-hour expiry              | Working                      |
+| Session created on register | Working                      |
+| Login page                  | Working                      |
+| Email delivery              | Blocked by DigitalOcean SMTP |
+| Admin dashboard UI          | Not built yet                |
+| Agency dashboard UI         | Not built yet                |
