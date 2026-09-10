@@ -1,105 +1,216 @@
 <?php
-require_once __DIR__ . '/../../backend/db.php';
-require_once __DIR__ . '/../../backend/auth/session.php';
-require_once __DIR__ . '/../../backend/auth/sanitize.php';
-
-header('Content-Type: application/json');
+require_once __DIR__ . '/../backend/auth/session.php';
+require_once __DIR__ . '/../backend/db.php';
 
 requireAdmin();
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit;
-}
+// Fetch agencies for the dropdown
+$db   = db();
+$stmt = $db->prepare("SELECT agency_id, name FROM agencies WHERE is_active = true ORDER BY name ASC");
+$stmt->execute();
+$agencies = $stmt->fetchAll();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invite User — CAPK Admin</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        .invite-container {
+            max-width: 520px;
+            margin: 60px auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        .invite-container h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+        .invite-container p.subtitle { color: #666; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+        .form-group input,
+        .form-group select {
+            width: 100%; padding: 0.6rem 0.8rem;
+            border: 1px solid #ccc; border-radius: 4px;
+            font-size: 1rem; box-sizing: border-box;
+        }
+        .role-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .role-toggle label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.6rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .role-toggle input {
+            width: auto;
+        }
+        .role-toggle label.active {
+            border-color: #c0392b;
+            background: #fdf0f0;
+            color: #c0392b;
+        }
+        #agencyGroup.hidden {
+            display: none;
+        }
+        .btn {
+            width: 100%; padding: 0.75rem;
+            background: #c0392b; color: #fff;
+            border: none; border-radius: 4px;
+            font-size: 1rem; cursor: pointer; font-weight: 600;
+        }
+        .btn:hover { background: #a93226; }
+        .back-link { display: inline-block; margin-bottom: 1.5rem; color: #c0392b; text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { text-decoration: underline; }
+        .result { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; display: none; }
+        .result.success { background: #eafaf1; border: 1px solid #27ae60; }
+        .result.error   { background: #fdf0f0; border: 1px solid #c0392b; }
+        .result p { margin: 0 0 0.5rem; font-weight: 600; }
+        .invite-link {
+            word-break: break-all;
+            background: #f4f4f4;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        .copy-btn {
+            margin-top: 0.5rem;
+            padding: 0.4rem 1rem;
+            background: #2c3e50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+<div class="invite-container">
+    <a href="/admin_dashboard.php" class="back-link">← Back to Dashboard</a>
+    <h1>Invite User</h1>
+    <p class="subtitle">Send a one-time invite link. The link expires in 72 hours.</p>
 
-$email    = cleanEmail($_POST['email']     ?? '');
-$agencyId = cleanInt($_POST['agency_id']   ?? 0);
-$role     = cleanString($_POST['role']     ?? 'agency');
+    <form id="inviteForm">
+        <div class="form-group">
+            <label>Account Type</label>
+            <div class="role-toggle">
+                <label id="roleLabelAgency" class="active">
+                    <input type="radio" name="role" value="agency" checked>
+                    Agency Manager
+                </label>
+                <label id="roleLabelAdmin">
+                    <input type="radio" name="role" value="admin">
+                    Admin
+                </label>
+            </div>
+        </div>
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'A valid email address is required']);
-    exit;
-}
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" name="email" placeholder="contact@agency.org" required>
+        </div>
 
-if ($agencyId <= 0) {
-    http_response_code(400);
-    echo json_encode(['error' => 'A valid agency must be selected']);
-    exit;
-}
+        <div class="form-group" id="agencyGroup">
+            <label>Agency</label>
+            <select name="agency_id" id="agencySelect" required>
+                <option value="">— Select an agency —</option>
+                <?php foreach ($agencies as $agency): ?>
+                    <option value="<?= $agency['agency_id'] ?>">
+                        <?= htmlspecialchars($agency['name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
 
-if (!in_array($role, ['admin', 'agency'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid role']);
-    exit;
-}
+        <button type="submit" class="btn">Send Invite</button>
+    </form>
 
-$db = db();
+    <div class="result" id="result">
+        <p id="resultMsg"></p>
+        <div class="invite-link" id="inviteLink" style="display:none;"></div>
+        <button class="copy-btn" id="copyBtn" style="display:none;" onclick="copyLink()">Copy Link</button>
+    </div>
+</div>
 
-// Check agency exists
-$check = $db->prepare("SELECT agency_id FROM agencies WHERE agency_id = ? AND is_active = true LIMIT 1");
-$check->execute([$agencyId]);
-if (!$check->fetch()) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Agency not found']);
-    exit;
-}
+<script>
+    const roleRadios    = document.querySelectorAll('input[name="role"]');
+    const agencyGroup   = document.getElementById('agencyGroup');
+    const agencySelect  = document.getElementById('agencySelect');
+    const labelAgency   = document.getElementById('roleLabelAgency');
+    const labelAdmin    = document.getElementById('roleLabelAdmin');
 
-// Check no pending invite already exists for this email
-$existing = $db->prepare("
-    SELECT id FROM invitations
-    WHERE email = ? AND used_at IS NULL AND expires_at > NOW()
-    LIMIT 1
-");
-$existing->execute([$email]);
-if ($existing->fetch()) {
-    http_response_code(409);
-    echo json_encode(['error' => 'A pending invite already exists for this email']);
-    exit;
-}
+    function updateRoleUI() {
+        const role = document.querySelector('input[name="role"]:checked').value;
 
-// Generate token
-$token     = bin2hex(random_bytes(32));
-$expiresAt = date('Y-m-d H:i:s', strtotime('+72 hours'));
-$invitedBy = currentAccountId();
+        if (role === 'admin') {
+            agencyGroup.classList.add('hidden');
+            agencySelect.required = false;
+            labelAdmin.classList.add('active');
+            labelAgency.classList.remove('active');
+        } else {
+            agencyGroup.classList.remove('hidden');
+            agencySelect.required = true;
+            labelAgency.classList.add('active');
+            labelAdmin.classList.remove('active');
+        }
+    }
 
-// Store invite
-$stmt = $db->prepare("
-    INSERT INTO invitations (token, email, agency_id, role, invited_by, expires_at, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, NOW())
-");
-$stmt->execute([$token, $email, $agencyId, $role, $invitedBy, $expiresAt]);
+    roleRadios.forEach(r => r.addEventListener('change', updateRoleUI));
+    updateRoleUI();
 
-// Build invite link
-$inviteLink = 'https://www.120580.xyz/register.php?token=' . $token;
+    document.getElementById('inviteForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const data      = new FormData(e.target);
+        const resultEl  = document.getElementById('result');
+        const msgEl     = document.getElementById('resultMsg');
+        const linkEl    = document.getElementById('inviteLink');
+        const copyBtn   = document.getElementById('copyBtn');
 
-// Send email
-$subject = 'You have been invited to manage a listing on CAPK 2-1-1';
-$message = "Hello,\n\n"
-    . "You have been invited to create an account on the CAPK 2-1-1 Kern County Resource Directory.\n\n"
-    . "Click the link below to set up your account. This link expires in 72 hours and can only be used once.\n\n"
-    . $inviteLink . "\n\n"
-    . "If you did not expect this invitation, you can safely ignore this email.\n\n"
-    . "— CAPK 2-1-1 Team";
+        resultEl.style.display = 'none';
+        resultEl.className     = 'result';
 
-$headers = "From: noreply@120580.xyz\r\nReply-To: noreply@120580.xyz";
-$sent    = mail($email, $subject, $message, $headers);
+        const res  = await fetch('/api.php?action=send_invite', { method: 'POST', body: data });
+        const json = await res.json();
 
-if (!$sent) {
-    error_log("Invite email failed for: $email — link: $inviteLink");
-    echo json_encode([
-        'success'     => true,
-        'warning'     => 'Invite created but email could not be sent. Copy the link manually.',
-        'invite_link' => $inviteLink,
-        'expires_at'  => $expiresAt
-    ]);
-    exit;
-}
+        resultEl.style.display = 'block';
 
-echo json_encode([
-    'success'     => true,
-    'message'     => "Invite sent to $email",
-    'invite_link' => $inviteLink,
-    'expires_at'  => $expiresAt
-]);
+        if (json.error) {
+            resultEl.classList.add('error');
+            msgEl.textContent = json.error;
+            linkEl.style.display = 'none';
+            copyBtn.style.display = 'none';
+        } else {
+            resultEl.classList.add('success');
+            msgEl.textContent = json.warning || json.message;
+
+            if (json.invite_link) {
+                linkEl.textContent    = json.invite_link;
+                linkEl.style.display  = 'block';
+                copyBtn.style.display = 'inline-block';
+            }
+        }
+    });
+
+    function copyLink() {
+        const link = document.getElementById('inviteLink').textContent;
+        navigator.clipboard.writeText(link).then(() => {
+            document.getElementById('copyBtn').textContent = 'Copied!';
+        });
+    }
+</script>
+</body>
+</html>

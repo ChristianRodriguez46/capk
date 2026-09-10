@@ -15,7 +15,7 @@ $agencies = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invite Agency User — CAPK Admin</title>
+    <title>Invite User — CAPK Admin</title>
     <link rel="stylesheet" href="/css/main.css">
     <style>
         .invite-container {
@@ -35,6 +35,35 @@ $agencies = $stmt->fetchAll();
             width: 100%; padding: 0.6rem 0.8rem;
             border: 1px solid #ccc; border-radius: 4px;
             font-size: 1rem; box-sizing: border-box;
+        }
+        .role-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .role-toggle label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.6rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .role-toggle input {
+            width: auto;
+        }
+        .role-toggle label.active {
+            border-color: #c0392b;
+            background: #fdf0f0;
+            color: #c0392b;
+        }
+        #agencyGroup.hidden {
+            display: none;
         }
         .btn {
             width: 100%; padding: 0.75rem;
@@ -72,17 +101,32 @@ $agencies = $stmt->fetchAll();
 <body>
 <div class="invite-container">
     <a href="/admin_dashboard.php" class="back-link">← Back to Dashboard</a>
-    <h1>Invite Agency User</h1>
-    <p class="subtitle">Send a one-time invite link to an agency contact. The link expires in 72 hours.</p>
+    <h1>Invite User</h1>
+    <p class="subtitle">Send a one-time invite link. The link expires in 72 hours.</p>
 
     <form id="inviteForm">
+        <div class="form-group">
+            <label>Account Type</label>
+            <div class="role-toggle">
+                <label id="roleLabelAgency" class="active">
+                    <input type="radio" name="role" value="agency" checked>
+                    Agency Manager
+                </label>
+                <label id="roleLabelAdmin">
+                    <input type="radio" name="role" value="admin">
+                    Admin
+                </label>
+            </div>
+        </div>
+
         <div class="form-group">
             <label>Email Address</label>
             <input type="email" name="email" placeholder="contact@agency.org" required>
         </div>
-        <div class="form-group">
+
+        <div class="form-group" id="agencyGroup">
             <label>Agency</label>
-            <select name="agency_id" required>
+            <select name="agency_id" id="agencySelect" required>
                 <option value="">— Select an agency —</option>
                 <?php foreach ($agencies as $agency): ?>
                     <option value="<?= $agency['agency_id'] ?>">
@@ -91,7 +135,7 @@ $agencies = $stmt->fetchAll();
                 <?php endforeach; ?>
             </select>
         </div>
-        <input type="hidden" name="role" value="agency">
+
         <button type="submit" class="btn">Send Invite</button>
     </form>
 
@@ -103,6 +147,31 @@ $agencies = $stmt->fetchAll();
 </div>
 
 <script>
+    const roleRadios    = document.querySelectorAll('input[name="role"]');
+    const agencyGroup   = document.getElementById('agencyGroup');
+    const agencySelect  = document.getElementById('agencySelect');
+    const labelAgency   = document.getElementById('roleLabelAgency');
+    const labelAdmin    = document.getElementById('roleLabelAdmin');
+
+    function updateRoleUI() {
+        const role = document.querySelector('input[name="role"]:checked').value;
+
+        if (role === 'admin') {
+            agencyGroup.classList.add('hidden');
+            agencySelect.required = false;
+            labelAdmin.classList.add('active');
+            labelAgency.classList.remove('active');
+        } else {
+            agencyGroup.classList.remove('hidden');
+            agencySelect.required = true;
+            labelAgency.classList.add('active');
+            labelAdmin.classList.remove('active');
+        }
+    }
+
+    roleRadios.forEach(r => r.addEventListener('change', updateRoleUI));
+    updateRoleUI();
+
     document.getElementById('inviteForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const data      = new FormData(e.target);
